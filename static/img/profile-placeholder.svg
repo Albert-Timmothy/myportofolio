@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="title description">
+  <title id="title">Profile placeholder</title>
+  <desc id="description">A warm orange square with Albert Timmothy Ariajaya's initials.</desc>
+  <rect width="600" height="600" fill="#d95d39"/>
+  <circle cx="300" cy="250" r="125" fill="#faf6f0" opacity=".92"/>
+  <path d="M90 570c28-145 119-215 210-215s182 70 210 215" fill="#1c1917"/>
+  <text x="300" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="112" font-weight="700" fill="#1c1917">ATA</text>
+</svg>
