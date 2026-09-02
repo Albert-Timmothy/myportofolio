@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albert Timmothy Ariajaya - Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a href="#profile" class="brand">Albert Timmothy Ariajaya</a>
+            <nav aria-label="Main navigation">
+                <a href="#profile">Profile</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="profile">
+            <div class="container hero-grid">
+                <div class="hero-identity">
+                    <p class="hero-kicker">Pemrograman Berbasis Platform</p>
+                    <h1>Albert Timmothy Ariajaya</h1>
+                </div>
+
+                <div class="hero-photo">
+                    <div class="photo-block"></div>
+                    <img class="avatar" src="{% static 'img/identitas.png' %}" alt="Photo of Albert Timmothy Ariajaya">
+                </div>
+
+                <div class="hero-details">
+                    <p class="bio">Mahasiswa yang sedang membangun portofolio web dengan Django dalam mata kuliah Pemrograman Berbasis Platform.</p>
+                    <dl class="meta-list">
+                        <div class="meta-row">
+                            <dt>NPM</dt>
+                            <dd>2506656381</dd>
+                        </div>
+                        <div class="meta-row">
+                            <dt>Program</dt>
+                            <dd>Universitas Indonesia</dd>
+                        </div>
+                    </dl>
+                    <div class="social-links">
+                        <a href="https://github.com/Albert-Timmothy" class="social-link">GitHub</a>
+                        <a href="#profile" class="social-link">LinkedIn</a>
+                        <a href="#profile" class="social-link">Email</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 Albert Timmothy Ariajaya. Universitas Indonesia.</p>
+        </div>
+    </footer>
+</body>
+</html>
