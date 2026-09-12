@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Award - {{ name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
+            <nav>
+                <a href="{% url 'main:show_main' %}">Profile</a>
+                <a href="{% url 'main:show_award' %}">Award</a>
+                <a href="{% url 'main:show_experience' %}">Experience</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="experience-section" id="award">
+            <div class="container">
+                <p class="section-kicker">Pencapaian saya sejauh ini</p>
+                <h1>Award</h1>
+
+                <div class="experience-grid">
+                    <article class="experience-card">
+                        <span class="experience-category">Hackathon</span>
+                        <h2>Winner, RISTEK Hackathon 2026</h2>
+                        <p class="experience-description">
+                            Won first place in a hackathon focused on innovation, product thinking, and digital solution development.
+                        </p>
+                        <p class="experience-status">Aug 2026</p>
+                    </article>
+
+                    <article class="experience-card">
+                        <span class="experience-category">Exhibition</span>
+                        <h2>Best Exhibition Awardee, RISTEK Hackathon 2026</h2>
+                        <p class="experience-description">
+                            Recognized for presenting a strong project showcase and communicating the solution clearly during the exhibition.
+                        </p>
+                        <p class="experience-status">Aug 2026</p>
+                    </article>
+
+                    <article class="experience-card">
+                        <span class="experience-category">Hackathon</span>
+                        <h2>Top National Finalist, Hackathon Digital Cooperatives Expo 2026</h2>
+                        <p class="experience-description">
+                            Selected as a national finalist for developing a digital cooperative solution with practical business and technology impact.
+                        </p>
+                        <p class="experience-status">Jul 2026</p>
+                    </article>
+
+                    <article class="experience-card">
+                        <span class="experience-category">Academic</span>
+                        <h2>Best 1st Graduation Student 2026</h2>
+                        <p class="experience-description">
+                            Graduated from SMA Negeri 66 Jakarta with the highest graduation score, achieving 91.47 out of 100.
+                        </p>
+                        <p class="experience-status">May 2026</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 {{ name }}. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+        </div>
+    </footer>
+</body>
+</html>
