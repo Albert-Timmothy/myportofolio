@@ -60,7 +60,7 @@ def create_initial_portfolio_data(apps, schema_editor):
                 "Managed communication and public relations initiatives for student "
                 "activities at BEM Fasilkom UI."
             ),
-            "category": "volunteer",
+            "category": "organization",
         },
         {
             "title": "Executive Board Secretary",
@@ -68,7 +68,7 @@ def create_initial_portfolio_data(apps, schema_editor):
                 "Handled administrative coordination, documentation, and internal "
                 "communication for Arung CS UI."
             ),
-            "category": "volunteer",
+            "category": "organization",
         },
     ]
 
