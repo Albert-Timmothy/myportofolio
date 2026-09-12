@@ -34,6 +34,3 @@ Saya membuat Website portofolio pribadi dengan Django untuk mata kuliah Pemrogra
 
 3. Okay karena website ini masih static web murni, semua informasi harus ditulis itu langsung saya coding/ketik di HTML. Batasannya yang sudah pasti lawannya dari statis adalah konten belum bisa dikelola secara dinamis, belum ada database tetapi next mungkin bakal dipelajari, dan juga belum ada fitur interaksi seperti filtering project atau form kontak ya fitur-fitur yang sering kita lihat kalau buka web portofolio sepuh diluar sana. Pada assignment berikutnya, saya ingin menambahkan data project dan experience melalui model Django agar konten portofolio bisa diperbarui dari database tanpa mengubah HTML secara manual.
 
-## AI Disclosure
-
-Saya menggunakan bantuan AI melalui Claude dengan strategi prompting awal sampai akhir untuk memperhatikan rubrik penilaian, memperhatikan checklist, penalti, dan constraints dari assignment. Saya juga menggunakan AI untuk memberitahu saya salah/error dimana, tetapi konten yang saya masukkan adalah pure saya kerjakan sendiri dengan bantuan AI untuk membantu melihat kesalahan coding yang saya lakukan. Untuk penambahan section tadi saya juga meminta bantuan agar kode tidak mengalami error saat saya memasukkan section awards, experiences, projects.

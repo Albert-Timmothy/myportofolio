@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from main.models import Experience
+from main.models import Award, Experience
 
 
 class MainTest(TestCase):
@@ -11,6 +11,12 @@ class MainTest(TestCase):
             title="Asisten Dosen PBP",
             description="Membantu mahasiswa memahami pengembangan web.",
             category="part-time",
+        )
+        self.award = Award.objects.create(
+            title="Juara 1 Hackathon",
+            organizer="Fasilkom UI",
+            date="Sep 2026",
+            description="Membuat solusi digital berbasis web.",
         )
 
     def test_main_url_is_accessible(self):
@@ -36,22 +42,17 @@ class MainTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "experience.html")
-        self.assertNotContains(response, self.experience.title)
-        self.assertContains(response, "Lecturer Assistant, Business Management")
-        self.assertContains(response, "Public Relation &amp; Communication Officer")
-        self.assertContains(response, "Executive Board Secretary")
+        self.assertContains(response, self.experience.title)
+        self.assertContains(response, self.experience.description)
         self.assertContains(response, "Part-Time")
-        self.assertContains(response, "Organization")
+        self.assertContains(response, "Sedang berlangsung")
         self.assertContains(response, f'href="{reverse("main:show_main")}"')
 
     def test_empty_experience_page(self):
         Experience.objects.all().delete()
         response = self.client.get(reverse("main:show_experience"))
 
-        self.assertContains(response, "Lecturer Assistant, Business Management")
-        self.assertContains(response, "Public Relation &amp; Communication Officer")
-        self.assertContains(response, "Executive Board Secretary")
-        self.assertNotContains(response, "Belum ada pengalaman yang ditambahkan.")
+        self.assertContains(response, "Belum ada pengalaman yang ditambahkan.")
 
     def test_completed_experience(self):
         self.experience.ended_at = timezone.now()
@@ -59,5 +60,26 @@ class MainTest(TestCase):
         response = self.client.get(reverse("main:show_experience"))
 
         self.assertFalse(self.experience.is_ongoing)
-        self.assertNotContains(response, "Selesai")
-        self.assertContains(response, "2026 - Present")
+        self.assertContains(response, self.experience.title)
+        self.assertContains(response, "Selesai")
+
+    def test_award_model(self):
+        self.assertEqual(str(self.award), "Juara 1 Hackathon")
+        self.assertEqual(self.award.organizer, "Fasilkom UI")
+
+    def test_award_page(self):
+        response = self.client.get(reverse("main:show_award"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "award.html")
+        self.assertContains(response, self.award.title)
+        self.assertContains(response, self.award.organizer)
+        self.assertContains(response, self.award.date)
+        self.assertContains(response, self.award.description)
+        self.assertContains(response, f'href="{reverse("main:show_experience")}"')
+
+    def test_empty_award_page(self):
+        Award.objects.all().delete()
+        response = self.client.get(reverse("main:show_award"))
+
+        self.assertContains(response, "Belum ada award yang ditambahkan.")

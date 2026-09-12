@@ -28,32 +28,27 @@
                 <h1>Experience</h1>
 
                 <div class="experience-grid">
-                    <article class="experience-card">
-                        <span class="experience-category">Part-Time</span>
-                        <h2>Lecturer Assistant, Business Management</h2>
-                        <p class="experience-description">
-                            Assisted in delivering course material and supporting student learning; coordinated grading and communication between faculty and students.
-                        </p>
-                        <p class="experience-status">2026 - Present</p>
-                    </article>
+                    {% for experience in experience_list %}
+                        <article class="experience-card">
+                            <span class="experience-category">
+                                {{ experience.get_category_display }}
+                            </span>
+                            <h2>{{ experience.title }}</h2>
+                            <p class="experience-description">
+                                {{ experience.description }}
+                            </p>
 
-                    <article class="experience-card">
-                        <span class="experience-category">Organization</span>
-                        <h2>Public Relation &amp; Communication Officer</h2>
-                        <p class="experience-description">
-                            Managed communication and public relations initiatives for student activities at BEM Fasilkom UI.
+                            {% if experience.is_ongoing %}
+                                <p class="experience-status">Sedang berlangsung</p>
+                            {% else %}
+                                <p class="experience-status">Selesai</p>
+                            {% endif %}
+                        </article>
+                    {% empty %}
+                        <p class="empty-state">
+                            Belum ada pengalaman yang ditambahkan.
                         </p>
-                        <p class="experience-status">2026 - Present</p>
-                    </article>
-
-                    <article class="experience-card">
-                        <span class="experience-category">Organization</span>
-                        <h2>Executive Board Secretary</h2>
-                        <p class="experience-description">
-                            Handled administrative coordination, documentation, and internal communication for Arung CS UI.
-                        </p>
-                        <p class="experience-status">2025 - Present</p>
-                    </article>
+                    {% endfor %}
                 </div>
             </div>
         </section>
