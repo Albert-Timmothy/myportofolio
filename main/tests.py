@@ -17,6 +17,7 @@ class MainTest(TestCase):
             organizer="Fasilkom UI",
             date="Sep 2026",
             description="Membuat solusi digital berbasis web.",
+            image="img/winnerristekhackathon.png",
         )
 
     def test_main_url_is_accessible(self):
@@ -76,6 +77,7 @@ class MainTest(TestCase):
         self.assertContains(response, self.award.organizer)
         self.assertContains(response, self.award.date)
         self.assertContains(response, self.award.description)
+        self.assertContains(response, self.award.image)
         self.assertContains(response, f'href="{reverse("main:show_experience")}"')
 
     def test_empty_award_page(self):

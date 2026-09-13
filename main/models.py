@@ -7,6 +7,7 @@ class Award(models.Model):
     organizer = models.CharField(max_length=255)
     date = models.CharField(max_length=50)
     description = models.TextField(blank=True)
+    image = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
         return self.title

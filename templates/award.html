@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
 </head>
 <body>
     <header class="site-header">
@@ -30,6 +30,9 @@
                 <div class="experience-grid">
                     {% for award in award_list %}
                         <article class="experience-card">
+                            {% if award.image %}
+                                <img class="award-image" src="/static/{{ award.image }}" alt="{{ award.title }}">
+                            {% endif %}
                             <span class="experience-category">
                                 {{ award.organizer }}
                             </span>

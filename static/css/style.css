@@ -295,6 +295,41 @@ h1,
     background-color: var(--line);
 }
 
+.skills-footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+}
+
+.skills-section .skills-footer-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr);
+    justify-content: space-between;
+}
+
+.skills-connect h2 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.skills-connect p {
+    margin-bottom: 1.5rem;
+}
+
+.footer-social-links {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.footer-social-links a {
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: underline;
+}
+
 .skills-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -311,9 +346,15 @@ h1,
 }
 
 .skill-category li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--line);
+    padding: 0.55rem 0;
     font-size: 0.95rem;
+}
+
+@media (max-width: 700px) {
+    .skills-footer-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
 }
 
 .experience-section {
@@ -345,6 +386,18 @@ h1,
     background-color: #fff;
     border: 1px solid var(--line);
     border-radius: var(--radius);
+}
+
+.award-image {
+    display: block;
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    object-position: center;
+    background-color: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    margin-bottom: 1rem;
 }
 
 .experience-category {
