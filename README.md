@@ -34,3 +34,14 @@ Saya membuat Website portofolio pribadi dengan Django untuk mata kuliah Pemrogra
 
 3. Okay karena website ini masih static web murni, semua informasi harus ditulis itu langsung saya coding/ketik di HTML. Batasannya yang sudah pasti lawannya dari statis adalah konten belum bisa dikelola secara dinamis, belum ada database tetapi next mungkin bakal dipelajari, dan juga belum ada fitur interaksi seperti filtering project atau form kontak ya fitur-fitur yang sering kita lihat kalau buka web portofolio sepuh diluar sana. Pada assignment berikutnya, saya ingin menambahkan data project dan experience melalui model Django agar konten portofolio bisa diperbarui dari database tanpa mengubah HTML secara manual.
 
+### Tugas 2
+
+1. Ketika pengguna membuka halaman award, browser mengirim request ke proyek Django. File `portofolio/urls.py` meneruskan request tersebut ke URL aplikasi `main`, lalu `main/urls.py` mencocokkan path `/awards/` dengan view `show_award`. View tersebut mengambil data dari model `Award` melalui `Award.objects.all()`, memasukkannya ke context sebagai `award_list`, lalu mengirim context tersebut ke template `award.html`. Template kemudian menggunakan Django Template Language untuk melakukan perulangan terhadap `award_list` dan menampilkan setiap data award ke browser.
+
+2. Data bagian portofolio baru sebaiknya disimpan pada model karena model membuat data lebih mudah dikelola, diuji, dan dikembangkan. Kalau data award ditulis langsung di template, setiap perubahan isi harus dilakukan dengan mengedit HTML. Dengan model, struktur data tersimpan di database dan template hanya bertanggung jawab untuk menampilkan data. Pendekatan ini membuat aplikasi lebih mudah dipelihara, terutama kalau nanti data ingin ditambah lewat admin, dibuat halaman detail, atau dikembangkan menjadi fitur lain.
+
+3. `makemigrations` digunakan untuk membuat berkas migrasi berdasarkan perubahan pada model, sedangkan `migrate` digunakan untuk menerapkan berkas migrasi tersebut ke database. Contohnya, ketika saya menambahkan model `Award` dengan field `title`, `organizer`, `date`, dan `description`, saya perlu menjalankan `makemigrations` agar Django membuat file migrasi baru. Setelah itu, saya menjalankan `migrate` agar tabel `Award` benar-benar dibuat di database.
+
+## AI Disclosure
+
+Saya menggunakan bantuan AI melalui Claude dengan strategi prompting awal sampai akhir untuk memperhatikan rubrik penilaian, memperhatikan checklist, penalti, dan constraints dari assignment. Saya juga menggunakan AI untuk memberitahu saya salah/error dimana, tetapi konten yang saya masukkan adalah pure saya kerjakan sendiri dengan bantuan AI untuk membantu melihat kesalahan coding yang saya lakukan. Untuk penambahan section tadi saya juga meminta bantuan agar kode tidak mengalami error saat saya memasukkan section awards, experiences, projects.
