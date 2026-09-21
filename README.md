@@ -46,5 +46,19 @@ Saya membuat Website portofolio pribadi dengan Django untuk mata kuliah Pemrogra
 
 Saya menggunakan bantuan AI melalui Claude dengan strategi prompting awal sampai akhir untuk memperhatikan rubrik penilaian, memperhatikan checklist, penalti, dan constraints dari assignment. Saya juga menggunakan AI untuk memberitahu saya salah/error dimana, tetapi konten yang saya masukkan adalah pure saya kerjakan sendiri dengan bantuan AI untuk membantu melihat kesalahan coding yang saya lakukan. Untuk penambahan section tadi saya juga meminta bantuan agar kode tidak mengalami error saat saya memasukkan section awards, experiences, projects.
 
+### Tugas 3
 
+1. Saya pakai `ModelForm` karena field-fieldnya otomatis mengikuti model `Skill` yang sudah saya buat sebelumnya. Jadi saya nggak perlu nulis ulang satu-satu tipe data, batas panjang, atau pilihan kategori di HTML — cukup sekali didefinisikan di model, form-nya otomatis ikut. Ini juga bikin proses validasi dan penyimpanan ke database jadi lebih simpel, saya nggak perlu mikirin dua tempat (HTML dan view) yang bisa saja beda kalau modelnya berubah nanti. Kalau untuk fitur edit, saya tinggal kasih tahu form data mana yang mau diubah, jadi form-nya otomatis terisi nilai lama. Soal `{% csrf_token %}`, itu wajib karena tanpa token itu situs luar bisa saja "menyamar" mengirim data lewat form saya tanpa saya sadari, misalnya menghapus atau menambah skill diam-diam. Jadi token itu semacam tanda pengaman supaya Django yakin form yang dikirim memang benar-benar dari halaman saya sendiri.
+
+
+2. Menurut saya JSON lebih disukai karena lebih ringkas dan gampang dibaca, baik oleh manusia maupun program. Dibanding XML yang harus pakai tag pembuka-penutup di setiap data, JSON cukup pakai kurung kurawal dan koma, jadi datanya lebih kecil dan lebih cepat dikirim. JSON juga lebih "natural" buat dipakai di JavaScript karena bentuknya mirip banget sama objek/array biasa, tinggal di-parse langsung tanpa proses tambahan yang ribet. XML sebenarnya masih dipakai di beberapa kasus yang butuh struktur sangat ketat atau dokumen kompleks, tapi untuk kebutuhan web modern kayak portofolio saya ini, JSON jauh lebih praktis.
+
+3. Alurnya seperti ini jadinya waktu saya buka halaman skills, aplikasi Django dulu ambil semua data skill dari database, lalu data itu "dibungkus" jadi format JSON supaya bisa dikirim lewat internet. Setelah sampai di sisi tampilan, data JSON itu "dibongkar" lagi jadi objek yang bisa dipakai buat ditampilkan satu-satu di halaman. Proses bungkus-bongkar ini (serialization-deserialization) perlu dilakukan karena data yang tersimpan di database itu bentuknya objek Python yang terikat ke Django, sedangkan yang bisa dikirim lewat internet cuma teks biasa. Jadi harus diubah dulu ke bentuk teks standar (JSON) supaya bisa "dimengerti" siapa pun yang mengaksesnya, baru nanti diubah balik jadi objek supaya bisa ditampilkan lagi di web saya.
+
+## AI Disclosure
+
+Saya menggunakan bantuan AI melalui Claude dengan strategi prompting awal sampai akhir untuk memperhatikan rubrik penilaian, memperhatikan checklist, penalti, dan constraints dari assignment. Saya juga menggunakan AI untuk memberitahu saya salah/error dimana, tetapi konten yang saya masukkan adalah pure saya kerjakan sendiri dengan bantuan AI untuk membantu melihat kesalahan coding yang saya lakukan. Untuk penambahan section tadi saya juga meminta bantuan agar kode tidak mengalami error saat saya memasukkan section awards, experiences, projects.
+
+- **Tools:** Claude (claude.ai).
+- **Strategi prompting:** Saya mengunggah berkas soal Individual Assignment 3 (checklist, rubrik, dan pertanyaan reflektif), lalu meminta Claude memahami  dan membuat section Skills & Tools yang sesuai dengan ketentuan tersebut. Saya mengerjakannya bertahap: memahami struktur kode, menambahkan link Project di navbar, lalu membuat fitur Skills & Tools.
 
