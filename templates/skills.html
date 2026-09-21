@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block meta %}
+    <title>Skills &amp; Tools - {{ name }}</title>
+{% endblock meta %}
+{% block content %}
+    <main>
+        <section class="experience-section" id="skills">
+            <div class="container">
+                <p class="section-kicker">Kemampuan yang saya gunakan</p>
+                <div class="project-header">
+                    <h1>Skills &amp; Tools</h1>
+                    <a href="{% url 'main:create_skill' %}"
+                       class="button project-add-button">
+                        <span aria-hidden="true">+</span>
+                        Tambah Skill
+                    </a>
+                </div>
+                <form method="get"
+                      action="{% url 'main:show_skills' %}"
+                      class="project-search skill-search">
+                    <input type="search"
+                           name="name"
+                           value="{{ name_query }}"
+                           placeholder="Cari berdasarkan nama skill"
+                           class="project-search__input"
+                           aria-label="Cari berdasarkan nama skill">
+                    <select name="category"
+                            class="project-search__select"
+                            aria-label="Filter kategori">
+                        <option value="">Semua kategori</option>
+                        {% for value, label in category_choices %}
+                            <option value="{{ value }}"{% if value == selected_category %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="button">Cari</button>
+                    <a href="{% url 'main:get_skills_json' %}"
+                       class="button button-secondary">Lihat JSON</a>
+                </form>
+                <div class="experience-grid">
+                    {% for skill in skill_list %}
+                        <article class="experience-card">
+                            {% if skill.icon_url %}
+                                <img src="{{ skill.icon_url }}"
+                                     alt="Ikon {{ skill.name }}"
+                                     class="skill-icon">
+                            {% endif %}
+                            <span class="experience-category">{{ skill.get_category_display }}</span>
+                            {% if skill.is_featured %}
+                                <span class="skill-badge">Unggulan</span>
+                            {% endif %}
+                            <h2>{{ skill.name }}</h2>
+                            {% if skill.description %}
+                                <p class="experience-description">{{ skill.description }}</p>
+                            {% endif %}
+                            <p class="skill-level" aria-label="Level {{ skill.proficiency }} dari 5">
+                                {{ skill.proficiency_stars }}
+                                <span>{{ skill.get_proficiency_display }}</span>
+                            </p>
+                            <div class="project-actions">
+                                <a href="{% url 'main:update_skill' skill.id %}"
+                                   class="button button-secondary">Edit</a>
+                                {% include "components/skill_delete_modal.html" with skill=skill %}
+                            </div>
+                        </article>
+                    {% empty %}
+                        {% if name_query or selected_category %}
+                            <p class="empty-state">Tidak ada skill yang cocok dengan filter tersebut.</p>
+                        {% else %}
+                            <p class="empty-state">Belum ada skill yang ditambahkan.</p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock content %}

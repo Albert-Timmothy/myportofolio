@@ -47,3 +47,43 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Skill(models.Model):
+    CATEGORY_CHOICES = [
+        ('programming', 'Programming Language'),
+        ('framework', 'Framework & Library'),
+        ('database', 'Database'),
+        ('tool', 'Tool & Platform'),
+        ('design', 'Design & Creative'),
+        ('business', 'Business & Strategy'),
+        ('soft-skill', 'Soft Skill'),
+    ]
+    PROFICIENCY_CHOICES = [
+        (1, '1 - Beginner'),
+        (2, '2 - Basic'),
+        (3, '3 - Intermediate'),
+        (4, '4 - Advanced'),
+        (5, '5 - Expert'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='programming')
+    proficiency = models.PositiveSmallIntegerField(choices=PROFICIENCY_CHOICES, default=3)
+    description = models.TextField(blank=True)
+    icon_url = models.URLField(blank=True, max_length=500)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_featured', '-proficiency', 'name']
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def proficiency_stars(self):
+        """Level keahlian dalam bentuk bintang, contoh: 4 -> ****-."""
+        return '\u2605' * self.proficiency + '\u2606' * (5 - self.proficiency)

@@ -1,7 +1,7 @@
-from django.forms import ModelForm, TextInput, Textarea, URLInput
+from django.forms import CheckboxInput, ModelForm, Select, TextInput, Textarea, URLInput
 
-from main.models import Project
-    
+from main.models import Project, Skill
+
 class ProjectForm(ModelForm):
     class Meta:
         model = Project
@@ -49,4 +49,54 @@ class ProjectForm(ModelForm):
                     "placeholder": "https://drive.google.com/thumbnail?id=...&sz=w1000",
                 }
             ),
+        }
+
+
+class SkillForm(ModelForm):
+    class Meta:
+        model = Skill
+        fields = [
+            "name",
+            "category",
+            "proficiency",
+            "description",
+            "icon_url",
+            "is_featured",
+        ]
+
+        labels = {
+            "name": "Nama Skill / Tool",
+            "category": "Kategori",
+            "proficiency": "Tingkat Kemampuan",
+            "description": "Deskripsi Singkat",
+            "icon_url": "URL Ikon",
+            "is_featured": "Skill Unggulan",
+        }
+
+        help_texts = {
+            "icon_url": "Opsional. Tautan gambar logo atau ikon.",
+            "is_featured": "Skill unggulan ditampilkan paling atas.",
+        }
+
+        widgets = {
+            "name": TextInput(
+                attrs={
+                    "placeholder": "Django",
+                    "maxlength": 100,
+                }
+            ),
+            "category": Select(),
+            "proficiency": Select(),
+            "description": Textarea(
+                attrs={
+                    "placeholder": "Ceritakan bagaimana kamu memakainya",
+                    "rows": 3,
+                }
+            ),
+            "icon_url": URLInput(
+                attrs={
+                    "placeholder": "https://example.com/logo.png",
+                }
+            ),
+            "is_featured": CheckboxInput(),
         }
