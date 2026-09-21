@@ -14,6 +14,7 @@ from main.views import (
     show_main,
     show_projects,
     show_skills,
+    update_project,
     update_skill,
 )
 
@@ -25,6 +26,7 @@ urlpatterns = [
     path("awards/", show_award, name="show_award"),
     path("projects/add/", create_project, name="create_project"),
     path("projects/", show_projects, name="show_projects"),
+    path("projects/<uuid:project_id>/edit/", update_project, name="update_project"),
     path("projects/<uuid:project_id>/delete/", delete_project, name="delete_project"),
     path("skills/", show_skills, name="show_skills"),
     path("skills/add/", create_skill, name="create_skill"),
