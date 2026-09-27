@@ -813,3 +813,29 @@ h1,
     font-size: 0.85rem;
     letter-spacing: 0;
 }
+
+.nav-user {
+    font-weight: 700;
+    margin-left: 0.5rem;
+}
+
+.star-form {
+    display: inline;
+}
+
+.button-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.button-star.is-starred {
+    background: var(--accent);
+}
+
+.star-count {
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.15);
+    font-size: 0.8rem;
+}
