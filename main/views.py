@@ -107,7 +107,7 @@ def get_experiences_json(request):
 
 @login_required(login_url="/login/")
 def create_project(request):
-    if not request.user.is_superuser:
+    if not request.user.has_perm("main.add_project"):
         raise PermissionDenied
 
     form = ProjectForm(request.POST or None)
@@ -128,7 +128,7 @@ def create_project(request):
 
 @login_required(login_url="/login/")
 def update_project(request, project_id):
-    if not request.user.is_superuser:
+    if not request.user.has_perm("main.change_project"):
         raise PermissionDenied
 
     project = get_object_or_404(Project, pk=project_id)
@@ -150,7 +150,7 @@ def update_project(request, project_id):
 
 @login_required(login_url="/login/")
 def delete_project(request, project_id):
-    if not request.user.is_superuser:
+    if not request.user.has_perm("main.delete_project"):
         raise PermissionDenied
 
     project = get_object_or_404(Project, pk=project_id)
@@ -241,7 +241,11 @@ def show_skills(request):
     return render(request, "skills.html", context)
 
 
+@login_required(login_url="/login/")
 def create_skill(request):
+    if not request.user.has_perm("main.add_skill"):
+        raise PermissionDenied
+
     form = SkillForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -258,7 +262,11 @@ def create_skill(request):
     return render(request, "skill_form.html", context)
 
 
+@login_required(login_url="/login/")
 def update_skill(request, skill_id):
+    if not request.user.has_perm("main.change_skill"):
+        raise PermissionDenied
+
     skill = get_object_or_404(Skill, pk=skill_id)
     form = SkillForm(request.POST or None, instance=skill)
 
@@ -276,8 +284,12 @@ def update_skill(request, skill_id):
     return render(request, "skill_form.html", context)
 
 
+@login_required(login_url="/login/")
 @require_POST
 def delete_skill(request, skill_id):
+    if not request.user.has_perm("main.delete_skill"):
+        raise PermissionDenied
+
     skill = get_object_or_404(Skill, pk=skill_id)
     skill.delete()
     messages.success(request, "Skill berhasil dihapus!")
