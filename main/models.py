@@ -83,6 +83,9 @@ class Skill(models.Model):
     is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    starred_by = models.ManyToManyField(
+        User, related_name="starred_skills", blank=True
+    )
 
     class Meta:
         ordering = ['-is_featured', '-proficiency', 'name']

@@ -9,11 +9,13 @@
                 <p class="section-kicker">Kemampuan yang saya gunakan</p>
                 <div class="project-header">
                     <h1>Skills &amp; Tools</h1>
-                    <a href="{% url 'main:create_skill' %}"
-                       class="button project-add-button">
-                        <span aria-hidden="true">+</span>
-                        Tambah Skill
-                    </a>
+                    {% if perms.main.add_skill %}
+                        <a href="{% url 'main:create_skill' %}"
+                           class="button project-add-button">
+                            <span aria-hidden="true">+</span>
+                            Tambah Skill
+                        </a>
+                    {% endif %}
                 </div>
                 <form method="get"
                       action="{% url 'main:show_skills' %}"
@@ -57,10 +59,19 @@
                                 <span>{{ skill.get_proficiency_display }}</span>
                             </p>
                             <div class="project-actions">
-                                <a href="{% url 'main:update_skill' skill.id %}"
-                                   class="button button-secondary">Edit</a>
-                                {% include "components/skill_delete_modal.html" with skill=skill %}
+                                {% include "components/skill_star.html" with skill=skill %}
                             </div>
+                            {% if perms.main.change_skill or perms.main.delete_skill %}
+                                <div class="project-actions">
+                                    {% if perms.main.change_skill %}
+                                        <a href="{% url 'main:update_skill' skill.id %}"
+                                           class="button button-secondary">Edit</a>
+                                    {% endif %}
+                                    {% if perms.main.delete_skill %}
+                                        {% include "components/skill_delete_modal.html" with skill=skill %}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         </article>
                     {% empty %}
                         {% if name_query or selected_category %}

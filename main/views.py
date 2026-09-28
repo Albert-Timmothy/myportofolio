@@ -17,10 +17,10 @@ from main.models import Award, Experience, Project, Skill
 OWNER_NAME = "Albert Timmothy Ariajaya"
 
 
-def _json_response(queryset):
+def _json_response(queryset, fields=None):
     """Serialisasi queryset model ke JSON lalu bungkus sebagai HttpResponse."""
     return HttpResponse(
-        serializers.serialize("json", queryset),
+        serializers.serialize("json", queryset, fields=fields),
         content_type="application/json",
     )
 
@@ -234,7 +234,19 @@ def get_skills_json(request):
     if category in dict(Skill.CATEGORY_CHOICES):
         skills = skills.filter(category=category)
 
-    return _json_response(skills)
+    return _json_response(
+        skills,
+        fields=(
+            "name",
+            "category",
+            "proficiency",
+            "description",
+            "icon_url",
+            "is_featured",
+            "created_at",
+            "updated_at",
+        ),
+    )
 
 
 def show_skills(request):
@@ -308,4 +320,18 @@ def delete_skill(request, skill_id):
     skill = get_object_or_404(Skill, pk=skill_id)
     skill.delete()
     messages.success(request, "Skill berhasil dihapus!")
+    return redirect("main:show_skills")
+
+
+@login_required(login_url="/login/")
+@require_POST
+def toggle_skill_star(request, skill_id):
+    """Beri atau batalkan star skill dari user yang login (maks. satu per user)."""
+    skill = get_object_or_404(Skill, pk=skill_id)
+
+    if skill.starred_by.filter(pk=request.user.pk).exists():
+        skill.starred_by.remove(request.user)
+    else:
+        skill.starred_by.add(request.user)
+
     return redirect("main:show_skills")
