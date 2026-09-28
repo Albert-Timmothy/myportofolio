@@ -66,3 +66,42 @@ Saya menggunakan bantuan AI melalui Claude dengan strategi prompting awal sampai
 - **Tools:** Claude (claude.ai).
 - **Strategi prompting:** Saya mengunggah berkas soal Individual Assignment 3 (checklist, rubrik, dan pertanyaan reflektif), lalu meminta Claude memahami  dan membuat section Skills & Tools yang sesuai dengan ketentuan tersebut. Saya mengerjakannya bertahap: memahami struktur kode, menambahkan link Project di navbar, lalu membuat fitur Skills & Tools.
 
+## Tugas 4
+
+#### Ringkasan Fitur
+ 
+Tugas 4 menambahkan autentikasi, otorisasi berbasis peran, dan fitur star pada bagian **Projects** dan **Skills & Tools**. Halaman daftar tetap bisa dibaca siapa pun, sedangkan tindakan yang mengubah data mengikuti hak akses pengguna.
+ 
+| Peran | Baca data | Star | Tambah | Ubah | Hapus |
+|---|---|---|---|---|---|
+| Pengunjung tanpa login | Ya | Tidak (diarahkan ke login) | Tidak | Tidak | Tidak |
+| Pengguna biasa | Ya | Ya | Tidak | Tidak | Tidak |
+| Editor | Ya | Ya | Tidak | Ya | Tidak |
+| Pemilik portofolio (superuser) | Ya | Ya | Ya | Ya | Ya |
+
+#### Implementasi
+ 
+**Autentikasi dan otorisasi (server-side)**
+- Semua view yang mengubah data memakai `@login_required`, sehingga pengunjung tanpa login diarahkan ke halaman login.
+- Setelah login, hak akses dicek dengan `request.user.has_perm(...)` dan mengembalikan HTTP 403 (`PermissionDenied`) bila tidak berhak. Permission yang dipakai: `add`, `change`, dan `delete` untuk model `Project` dan `Skill`.
+- Superuser otomatis lolos semua pengecekan permission, sedangkan Editor hanya memiliki permission `change`.
+- View hapus dan view star hanya menerima method POST (`@require_POST`).
+**Tampilan (template)**
+- Tombol Tambah, Edit, dan Hapus disembunyikan dengan `{% if perms.main.<aksi>_<model> %}`, sehingga tampilan selalu konsisten dengan pengecekan di server.
+- Pengunjung tanpa login melihat tombol Star berupa tautan ke halaman login.
+**Fitur Star**
+- Model `Project` dan `Skill` memiliki `starred_by = ManyToManyField(User)`, sehingga satu pengguna hanya bisa memberi satu star per item.
+- View `toggle_star` (Project) dan `toggle_skill_star` (Skill) memberi atau membatalkan star melalui POST dengan `{% csrf_token %}`. Halaman menampilkan jumlah total star dan status star pengguna yang sedang login (Star atau Unstar).
+**Keamanan API**
+- Endpoint `/api/projects/` dan `/api/skills/` membatasi field yang diserialisasi dan tidak menyertakan `starred_by`, sehingga identitas pengguna yang memberi star tidak terbuka ke publik.
+- Daftar username pemberi star juga dihapus dari tampilan halaman.
+**Pengujian manual**
+ 
+Fitur diuji dengan empat peran (anonim, pengguna biasa, editor, superuser) pada halaman dan URL langsung untuk create, update, delete, dan star. Hasilnya: anonim diarahkan ke login, pengguna biasa dan editor mendapat 403 untuk aksi yang tidak diizinkan, tombol yang tidak berhak tidak tampil, dan `python manage.py runserver` berjalan tanpa error.
+
+**Reflektif**
+Dari sini saya belajar bahwa autentikasi hanya menjawab "siapa kamu", sedangkan otorisasi menjawab "kamu boleh apa". Cek `is_superuser` ternyata tidak cukup karena Editor ikut terblokir, jadi lebih tepat memakai `has_perm`. Menyembunyikan tombol di template juga hanya soal tampilan, yang benar-benar mengamankan adalah cek di server. Saya juga baru sadar kalau JSON bisa membocorkan username lewat relasi `starred_by`, dan itu saya buktikan sendiri dengan membuka `/api/projects/`.
+ 
+## AI Disclosure
+Saya menggunakan Claude (claude.ai) untuk memandu pengerjaan Tugas 4. Saya mengunggah soal dan ZIP proyek, lalu meminta dibimbing bertahap dari awal, tidak langsung diberi jawaban. Mulai dari membuat grup Editor di Django Admin, memproteksi view Project dan Skills, menyembunyikan tombol di template, sampai merapikan `toggle_star` dan JSON. Saya sendiri yang menjalankan server, membuat akun uji, migrasi, dan menguji empat peran di browser. Fitur star pada Skills adalah keputusan saya sebagai fitur tambahan.
+
