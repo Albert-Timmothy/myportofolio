@@ -181,6 +181,10 @@ def show_projects(request):
 
 
 def get_projects_json(request):
+    """Data proyek dalam format JSON, mendukung filter ?title=.
+
+    Field starred_by sengaja tidak diikutkan agar identitas user tidak bocor.
+    """
     title_query = request.GET.get("title", "").strip()
     projects = Project.objects.all()
 
