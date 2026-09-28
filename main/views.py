@@ -188,20 +188,31 @@ def get_projects_json(request):
         projects = projects.filter(title__icontains=title_query)
 
     return HttpResponse(
-        serializers.serialize("json", projects, use_natural_foreign_keys=True),
+        serializers.serialize(
+            "json",
+            projects,
+            fields=(
+                "title",
+                "description",
+                "tech_stack",
+                "project_url",
+                "project_image_url",
+            ),
+        ),
         content_type="application/json",
     )
 
 
 @login_required(login_url="/login/")
+@require_POST
 def toggle_star(request, project_id):
+    """Beri atau batalkan star dari user yang sedang login (maks. satu per user)."""
     project = get_object_or_404(Project, pk=project_id)
 
-    if request.method == "POST":
-        if request.user in project.starred_by.all():
-            project.starred_by.remove(request.user)
-        else:
-            project.starred_by.add(request.user)
+    if project.starred_by.filter(pk=request.user.pk).exists():
+        project.starred_by.remove(request.user)
+    else:
+        project.starred_by.add(request.user)
 
     return redirect("main:show_projects")
 
