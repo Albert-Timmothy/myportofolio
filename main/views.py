@@ -126,6 +126,28 @@ def create_project(request):
     return render(request, "projects_form.html", context)
 
 
+@require_POST
+def create_project_ajax(request):
+    # Tidak memakai @login_required agar pengunjung yang belum login
+    # mendapat JSON 403 (bukan redirect ke halaman login yang bisa dibaca fetch sebagai 200).
+    if not request.user.has_perm("main.add_project"):
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan proyek."},
+            status=403,
+        )
+
+    form = ProjectForm(request.POST)
+
+    if form.is_valid():
+        project = form.save()
+        return JsonResponse(
+            {"message": "Proyek berhasil ditambahkan.", "pk": str(project.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+
 @login_required(login_url="/login/")
 def update_project(request, project_id):
     if not request.user.has_perm("main.change_project"):
@@ -168,6 +190,7 @@ def show_projects(request):
     context = {
         "name": OWNER_NAME,
         "title_query": title_query,
+        "form": ProjectForm(),
     }
     return render(request, "project.html", context)
 
