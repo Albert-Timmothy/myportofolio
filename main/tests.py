@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group, Permission, User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -5,7 +6,7 @@ from django.utils import timezone
 import json
 import uuid
 
-from main.models import Award, Experience, Skill
+from main.models import Award, Experience, Project, Skill
 
 
 class MainTest(TestCase):
@@ -92,6 +93,9 @@ class MainTest(TestCase):
 
 class SkillTest(TestCase):
     def setUp(self):
+        # Sejak Tugas 4, create/update/delete Skill hanya untuk yang berhak.
+        self.owner = User.objects.create_superuser("owner", password="pw-owner-123")
+        self.client.force_login(self.owner)
         self.skill = Skill.objects.create(
             name="Django",
             category="framework",
@@ -247,3 +251,225 @@ class NavbarAndJsonTest(TestCase):
 
         self.assertIn("Juara 1", [item["fields"]["title"] for item in awards])
         self.assertIn("Asdos", [item["fields"]["title"] for item in experiences])
+
+
+# ---------- Tugas 4: autentikasi, otorisasi, dan star ----------
+
+def make_editor_group():
+    """Grup Editor: hanya boleh mengubah (change) Project dan Skill."""
+    group, _ = Group.objects.get_or_create(name="Editor")
+    group.permissions.add(
+        *Permission.objects.filter(codename__in=["change_project", "change_skill"])
+    )
+    return group
+
+
+class RoleTestBase(TestCase):
+    """Menyiapkan satu data per model dan akun untuk tiap peran."""
+
+    def setUp(self):
+        self.project = Project.objects.create(
+            title="Portfolio", description="Situs pribadi", tech_stack="Django"
+        )
+        self.skill = Skill.objects.create(name="Django")
+        self.regular = User.objects.create_user("biasa", password="pw-biasa-123")
+        self.editor = User.objects.create_user("editor", password="pw-editor-123")
+        self.editor.groups.add(make_editor_group())
+        self.owner = User.objects.create_superuser("owner", password="pw-owner-123")
+
+    def login_as(self, user):
+        self.client.logout()
+        if user is not None:
+            self.client.force_login(user)
+
+    def new_project(self):
+        return Project.objects.create(title="Baru", description="d", tech_stack="t")
+
+    def new_skill(self):
+        return Skill.objects.create(name="Baru")
+
+
+class RoleAccessTest(RoleTestBase):
+    def test_anonymous_is_redirected_to_login(self):
+        requests = [
+            ("get", reverse("main:create_project")),
+            ("get", reverse("main:update_project", args=[self.project.id])),
+            ("post", reverse("main:delete_project", args=[self.project.id])),
+            ("post", reverse("main:toggle_star", args=[self.project.id])),
+            ("get", reverse("main:create_skill")),
+            ("get", reverse("main:update_skill", args=[self.skill.id])),
+            ("post", reverse("main:delete_skill", args=[self.skill.id])),
+            ("post", reverse("main:toggle_skill_star", args=[self.skill.id])),
+        ]
+        for method, url in requests:
+            with self.subTest(method=method, url=url):
+                response = getattr(self.client, method)(url)
+                self.assertEqual(response.status_code, 302)
+                self.assertTrue(response["Location"].startswith("/login/"))
+        self.assertTrue(Project.objects.filter(pk=self.project.id).exists())
+        self.assertTrue(Skill.objects.filter(pk=self.skill.id).exists())
+
+    def test_regular_user_gets_403_on_every_write_action(self):
+        self.login_as(self.regular)
+        requests = [
+            ("get", reverse("main:create_project")),
+            ("get", reverse("main:update_project", args=[self.project.id])),
+            ("post", reverse("main:delete_project", args=[self.project.id])),
+            ("get", reverse("main:create_skill")),
+            ("get", reverse("main:update_skill", args=[self.skill.id])),
+            ("post", reverse("main:delete_skill", args=[self.skill.id])),
+        ]
+        for method, url in requests:
+            with self.subTest(method=method, url=url):
+                self.assertEqual(getattr(self.client, method)(url).status_code, 403)
+        self.assertTrue(Project.objects.filter(pk=self.project.id).exists())
+        self.assertTrue(Skill.objects.filter(pk=self.skill.id).exists())
+
+    def test_editor_can_update_but_not_create_or_delete(self):
+        self.login_as(self.editor)
+
+        self.assertEqual(
+            self.client.get(reverse("main:update_project", args=[self.project.id])).status_code, 200
+        )
+        self.assertEqual(
+            self.client.get(reverse("main:update_skill", args=[self.skill.id])).status_code, 200
+        )
+        self.assertEqual(self.client.get(reverse("main:create_project")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("main:create_skill")).status_code, 403)
+        self.assertEqual(
+            self.client.post(reverse("main:delete_project", args=[self.project.id])).status_code, 403
+        )
+        self.assertEqual(
+            self.client.post(reverse("main:delete_skill", args=[self.skill.id])).status_code, 403
+        )
+
+    def test_editor_update_is_saved(self):
+        self.login_as(self.editor)
+        response = self.client.post(
+            reverse("main:update_project", args=[self.project.id]),
+            {"title": "Diubah Editor", "description": "d", "tech_stack": "Django"},
+        )
+
+        self.assertRedirects(response, reverse("main:show_projects"))
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.title, "Diubah Editor")
+
+    def test_owner_has_full_access(self):
+        self.login_as(self.owner)
+
+        self.assertEqual(self.client.get(reverse("main:create_project")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("main:create_skill")).status_code, 200)
+        self.assertEqual(
+            self.client.get(reverse("main:update_project", args=[self.project.id])).status_code, 200
+        )
+
+        project, skill = self.new_project(), self.new_skill()
+        self.client.post(reverse("main:delete_project", args=[project.id]))
+        self.client.post(reverse("main:delete_skill", args=[skill.id]))
+        self.assertFalse(Project.objects.filter(pk=project.id).exists())
+        self.assertFalse(Skill.objects.filter(pk=skill.id).exists())
+
+
+class ButtonVisibilityTest(RoleTestBase):
+    """Tombol aksi hanya tampil untuk yang berhak (server tetap memeriksa)."""
+
+    def page(self, user, name):
+        self.login_as(user)
+        return self.client.get(reverse(name)).content.decode()
+
+    def test_projects_page_buttons_per_role(self):
+        edit_url = reverse("main:update_project", args=[self.project.id])
+        cases = [
+            (None, False, False, False),
+            (self.regular, False, False, False),
+            (self.editor, False, True, False),
+            (self.owner, True, True, True),
+        ]
+        for user, can_add, can_edit, can_delete in cases:
+            with self.subTest(user=user):
+                html = self.page(user, "main:show_projects")
+                self.assertEqual("Tambah Proyek" in html, can_add)
+                self.assertEqual(edit_url in html, can_edit)
+                self.assertEqual("Hapus Proyek" in html, can_delete)
+
+    def test_skills_page_buttons_per_role(self):
+        edit_url = reverse("main:update_skill", args=[self.skill.id])
+        cases = [
+            (None, False, False, False),
+            (self.regular, False, False, False),
+            (self.editor, False, True, False),
+            (self.owner, True, True, True),
+        ]
+        for user, can_add, can_edit, can_delete in cases:
+            with self.subTest(user=user):
+                html = self.page(user, "main:show_skills")
+                self.assertEqual("Tambah Skill" in html, can_add)
+                self.assertEqual(edit_url in html, can_edit)
+                self.assertEqual("Hapus Skill" in html, can_delete)
+
+
+class StarTest(RoleTestBase):
+    def test_toggle_star_adds_then_removes_for_both_models(self):
+        cases = [
+            (self.project, "main:toggle_star"),
+            (self.skill, "main:toggle_skill_star"),
+        ]
+        for item, url_name in cases:
+            with self.subTest(url=url_name):
+                self.login_as(self.regular)
+                url = reverse(url_name, args=[item.id])
+
+                self.client.post(url)
+                self.assertEqual(item.starred_by.count(), 1)
+                self.assertIn(self.regular, item.starred_by.all())
+
+                self.client.post(url)
+                self.assertEqual(item.starred_by.count(), 0)
+
+    def test_star_is_limited_to_one_per_user(self):
+        url = reverse("main:toggle_star", args=[self.project.id])
+        self.login_as(self.regular)
+        self.client.post(url)
+        self.login_as(self.editor)
+        self.client.post(url)
+
+        self.assertEqual(self.project.starred_by.count(), 2)
+
+    def test_star_rejects_get(self):
+        self.login_as(self.regular)
+        for name, item in (("main:toggle_star", self.project), ("main:toggle_skill_star", self.skill)):
+            with self.subTest(url=name):
+                response = self.client.get(reverse(name, args=[item.id]))
+                self.assertEqual(response.status_code, 405)
+                self.assertEqual(item.starred_by.count(), 0)
+
+    def test_star_count_and_state_are_shown(self):
+        self.project.starred_by.add(self.regular)
+
+        self.login_as(self.regular)
+        html = self.client.get(reverse("main:show_projects")).content.decode()
+        self.assertIn("Unstar", html)
+
+        self.login_as(None)
+        html = self.client.get(reverse("main:show_projects")).content.decode()
+        self.assertIn("Login untuk memberi star", html)
+        self.assertNotIn("Unstar", html)
+
+
+class JsonPrivacyTest(RoleTestBase):
+    def test_json_does_not_leak_who_starred(self):
+        self.project.starred_by.add(self.regular)
+        self.skill.starred_by.add(self.regular)
+
+        for name in ("main:get_projects_json", "main:get_skills_json"):
+            with self.subTest(url=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+                self.assertNotContains(response, "starred_by")
+                self.assertNotContains(response, "biasa")
+
+    def test_projects_json_still_has_project_data(self):
+        data = json.loads(self.client.get(reverse("main:get_projects_json")).content)
+
+        self.assertEqual(data[0]["fields"]["title"], "Portfolio")
+        self.assertEqual(data[0]["fields"]["tech_stack"], "Django")
