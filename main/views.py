@@ -289,7 +289,7 @@ def get_skills_json(request):
 def show_skills(request):
     context = {
         "name": OWNER_NAME,
-        "skill_list": _filtered_skills(request),
+        "form": SkillForm(),
         "name_query": request.GET.get("name", "").strip(),
         "selected_category": request.GET.get("category", "").strip(),
         "category_choices": Skill.CATEGORY_CHOICES,

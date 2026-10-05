@@ -118,17 +118,17 @@ class SkillTest(TestCase):
         self.assertEqual(self.skill.proficiency_stars, "\u2605" * 4 + "\u2606")
         self.assertEqual(self.skill.get_category_display(), "Framework & Library")
 
-    def test_skills_page_uses_base_and_shows_data(self):
+    def test_skills_page_renders_shell_without_database_items(self):
         response = self.client.get(reverse("main:show_skills"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "skills.html")
         self.assertTemplateUsed(response, "base.html")
-        self.assertContains(response, "Django")
-        self.assertContains(response, "Framework &amp; Library")
-        self.assertContains(response, "4 - Advanced")
-        self.assertContains(response, reverse("main:update_skill", args=[self.skill.id]))
-        self.assertContains(response, reverse("main:delete_skill", args=[self.skill.id]))
+        self.assertNotContains(response, self.skill.description)
+        self.assertNotIn("skill_list", response.context)
+        self.assertContains(response, 'id="skills-grid"')
+        self.assertContains(response, 'src="/static/js/skills.js"')
+        self.assertContains(response, 'id="skill-form"')
 
     def test_empty_skills_page(self):
         Skill.objects.all().delete()
@@ -140,11 +140,12 @@ class SkillTest(TestCase):
         Skill.objects.create(name="Figma", category="design", proficiency=3)
         response = self.client.get(reverse("main:show_skills"), {"category": "design"})
 
-        self.assertContains(response, "Figma")
+        self.assertNotContains(response, "Figma</h2>")
+        self.assertContains(response, 'value="design" selected')
         self.assertNotContains(response, "Framework web berbasis Python.")
 
         response = self.client.get(reverse("main:show_skills"), {"name": "tidak-ada"})
-        self.assertContains(response, "Tidak ada skill yang cocok dengan filter tersebut.")
+        self.assertContains(response, 'value="tidak-ada"')
 
     def test_skills_json(self):
         response = self.client.get(reverse("main:get_skills_json"))
@@ -394,7 +395,6 @@ class ButtonVisibilityTest(RoleTestBase):
                 self.assertEqual("Hapus Proyek" in html, can_delete)
 
     def test_skills_page_buttons_per_role(self):
-        edit_url = reverse("main:update_skill", args=[self.skill.id])
         cases = [
             (None, False, False, False),
             (self.regular, False, False, False),
@@ -405,8 +405,9 @@ class ButtonVisibilityTest(RoleTestBase):
             with self.subTest(user=user):
                 html = self.page(user, "main:show_skills")
                 self.assertEqual("Tambah Skill" in html, can_add)
-                self.assertEqual(edit_url in html, can_edit)
-                self.assertEqual("Hapus Skill" in html, can_delete)
+                self.assertIn(f'data-can-edit="{str(can_edit).lower()}"', html)
+                self.assertEqual('id="delete-skill-modal"' in html, can_delete)
+                self.assertEqual('id="skill-form"' in html, can_add)
 
 
 class StarTest(RoleTestBase):

@@ -1,0 +1,25 @@
+<div id="add-skill-modal" class="project-form-modal" popover="auto" role="dialog"
+     aria-modal="true" aria-labelledby="add-skill-title">
+    <button type="button" class="project-form-modal__backdrop" popovertarget="add-skill-modal"
+            popovertargetaction="hide" aria-label="Tutup form tambah skill"></button>
+    <div class="project-form-modal__content">
+        <button type="button" class="project-form-modal__close" popovertarget="add-skill-modal"
+                popovertargetaction="hide" aria-label="Tutup form tambah skill">&times;</button>
+        <h2 id="add-skill-title">Tambah Skill &amp; Tool</h2>
+        <form id="skill-form" method="post" action="{% url 'main:create_skill_ajax' %}" class="project-form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<p class="form-help">{{ field.help_text }}</p>{% endif %}
+                </div>
+            {% endfor %}
+            <div class="project-form-modal__actions">
+                <button type="button" class="button button-secondary" popovertarget="add-skill-modal"
+                        popovertargetaction="hide">Batal</button>
+                <button type="submit" class="button">Tambah Skill</button>
+            </div>
+        </form>
+    </div>
+</div>
