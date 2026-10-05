@@ -380,7 +380,6 @@ class ButtonVisibilityTest(RoleTestBase):
         return self.client.get(reverse(name)).content.decode()
 
     def test_projects_page_buttons_per_role(self):
-        edit_url = reverse("main:update_project", args=[self.project.id])
         cases = [
             (None, False, False, False),
             (self.regular, False, False, False),
@@ -391,8 +390,9 @@ class ButtonVisibilityTest(RoleTestBase):
             with self.subTest(user=user):
                 html = self.page(user, "main:show_projects")
                 self.assertEqual("Tambah Proyek" in html, can_add)
-                self.assertEqual(edit_url in html, can_edit)
-                self.assertEqual("Hapus Proyek" in html, can_delete)
+                self.assertIn(f'const CAN_EDIT = "{str(can_edit).lower()}"', html)
+                self.assertIn(f'const CAN_DELETE = "{str(can_delete).lower()}"', html)
+                self.assertEqual('id="project-form"' in html, can_add)
 
     def test_skills_page_buttons_per_role(self):
         cases = [
@@ -448,14 +448,16 @@ class StarTest(RoleTestBase):
     def test_star_count_and_state_are_shown(self):
         self.project.starred_by.add(self.regular)
 
+        # Halaman hanya kerangka; star dibaca dari JSON sesuai pengguna yang login.
         self.login_as(self.regular)
-        html = self.client.get(reverse("main:show_projects")).content.decode()
-        self.assertIn("Unstar", html)
+        data = json.loads(self.client.get(reverse("main:get_projects_json")).content)
+        self.assertEqual(data[0]["fields"]["star_count"], 1)
+        self.assertTrue(data[0]["fields"]["is_starred"])
 
         self.login_as(None)
-        html = self.client.get(reverse("main:show_projects")).content.decode()
-        self.assertIn("Login untuk memberi star", html)
-        self.assertNotIn("Unstar", html)
+        data = json.loads(self.client.get(reverse("main:get_projects_json")).content)
+        self.assertEqual(data[0]["fields"]["star_count"], 1)
+        self.assertFalse(data[0]["fields"]["is_starred"])
 
 
 class JsonPrivacyTest(RoleTestBase):

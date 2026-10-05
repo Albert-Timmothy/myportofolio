@@ -130,7 +130,7 @@
         const isStarredClass = project.is_starred ? " is-starred" : "";
         const starText = project.is_starred ? "Unstar" : "Star";
         const starTitle = project.star_count > 0
-            ? `Dibintangi oleh ${escapeHtml(project.starred_by_names)}`
+            ? `${project.star_count} orang memberi star`
             : "Jadilah yang pertama memberi star";
 
         const starHtml = IS_AUTHENTICATED

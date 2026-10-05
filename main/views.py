@@ -210,7 +210,6 @@ def get_projects_json(request):
         is_starred = (
             request.user in starred_users if request.user.is_authenticated else False
         )
-        starred_by_names = ", ".join([u.username for u in starred_users])
 
         data.append({
             "pk": str(project.id),
@@ -222,7 +221,6 @@ def get_projects_json(request):
                 "project_image_url": project.project_image_url,
                 "star_count": len(starred_users),
                 "is_starred": is_starred,
-                "starred_by_names": starred_by_names,
             },
         })
 

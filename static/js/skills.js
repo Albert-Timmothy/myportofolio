@@ -151,11 +151,12 @@
                 const response = await fetch(form.action, {
                     method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' },
                 });
-                const result = await response.json();
+                // Respons non-JSON (mis. halaman 403 CSRF dari Django) tidak boleh dianggap gagal koneksi.
+                const result = await response.json().catch(() => ({}));
                 if (!response.ok) {
                     const messages = result.errors
                         ? Object.values(result.errors).flat().map(err => err.message)
-                        : [result.message || 'Skill gagal ditambahkan. Silakan coba lagi.'];
+                        : [result.message || `Skill gagal ditambahkan (status ${response.status}). Silakan coba lagi.`];
                     showToast('Gagal menambahkan skill', messages.join(' '), 'error');
                     return;
                 }
