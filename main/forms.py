@@ -68,6 +68,15 @@ class ProjectForm(ModelForm):
 
 
 class SkillForm(ModelForm):
+    def clean_name(self):
+        name = strip_tags(self.cleaned_data["name"]).strip()
+        if not name:
+            raise ValidationError("Nama skill tidak boleh hanya berisi tag HTML.")
+        return name
+
+    def clean_description(self):
+        return strip_tags(self.cleaned_data["description"]).strip()
+
     class Meta:
         model = Skill
         fields = [

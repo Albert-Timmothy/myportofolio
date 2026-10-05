@@ -245,49 +245,75 @@ def toggle_star(request, project_id):
 
 # ---------- Skills & Tools ----------
 
-def get_skills_json(request):
-    """Data skill dalam format JSON. Mendukung filter ?name= dan ?category=."""
+def _filtered_skills(request):
+    """Query bersama untuk halaman Skills dan endpoint AJAX."""
     name_query = request.GET.get("name", "").strip()
     category = request.GET.get("category", "").strip()
-    skills = Skill.objects.all()
+    skills = Skill.objects.prefetch_related("starred_by").all()
 
     if name_query:
         skills = skills.filter(name__icontains=name_query)
     if category in dict(Skill.CATEGORY_CHOICES):
         skills = skills.filter(category=category)
 
-    return _json_response(
-        skills,
-        fields=(
-            "name",
-            "category",
-            "proficiency",
-            "description",
-            "icon_url",
-            "is_featured",
-            "created_at",
-            "updated_at",
-        ),
-    )
+    return skills
+
+
+def get_skills_json(request):
+    """Data publik dan status star tanpa mengekspos identitas pemberi star."""
+    data = []
+    for skill in _filtered_skills(request):
+        starred_users = list(skill.starred_by.all())
+        data.append({
+            "pk": str(skill.pk),
+            "fields": {
+                "name": skill.name,
+                "category": skill.category,
+                "category_display": skill.get_category_display(),
+                "proficiency": skill.proficiency,
+                "proficiency_display": skill.get_proficiency_display(),
+                "description": skill.description,
+                "icon_url": skill.icon_url,
+                "is_featured": skill.is_featured,
+                "created_at": skill.created_at,
+                "updated_at": skill.updated_at,
+                "star_count": len(starred_users),
+                "is_starred": request.user.is_authenticated and any(
+                    user.pk == request.user.pk for user in starred_users
+                ),
+            },
+        })
+    return JsonResponse(data, safe=False)
 
 
 def show_skills(request):
-    # Ambil data lewat JSON, lalu deserialisasi kembali menjadi objek Skill.
-    json_response = get_skills_json(request)
-    deserialized = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    skills = [item.object for item in deserialized]
-
     context = {
         "name": OWNER_NAME,
-        "skill_list": skills,
+        "skill_list": _filtered_skills(request),
         "name_query": request.GET.get("name", "").strip(),
         "selected_category": request.GET.get("category", "").strip(),
         "category_choices": Skill.CATEGORY_CHOICES,
     }
     return render(request, "skills.html", context)
+
+
+@require_POST
+def create_skill_ajax(request):
+    # JSON 403, bukan redirect login yang akan diikuti oleh fetch().
+    if not request.user.has_perm("main.add_skill"):
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan skill."},
+            status=403,
+        )
+
+    form = SkillForm(request.POST)
+    if form.is_valid():
+        skill = form.save()
+        return JsonResponse(
+            {"message": "Skill berhasil ditambahkan.", "pk": str(skill.pk)},
+            status=201,
+        )
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 
 @login_required(login_url="/login/")

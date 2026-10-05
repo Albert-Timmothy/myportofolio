@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group, Permission, User
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -153,7 +153,8 @@ class SkillTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/json")
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["model"], "main.skill")
+        self.assertEqual(data[0]["fields"]["star_count"], 0)
+        self.assertFalse(data[0]["fields"]["is_starred"])
         self.assertEqual(data[0]["pk"], str(self.skill.id))
         self.assertEqual(data[0]["fields"]["name"], "Django")
         self.assertEqual(data[0]["fields"]["proficiency"], 4)
@@ -473,3 +474,71 @@ class JsonPrivacyTest(RoleTestBase):
 
         self.assertEqual(data[0]["fields"]["title"], "Portfolio")
         self.assertEqual(data[0]["fields"]["tech_stack"], "Django")
+
+
+class SkillAjaxTest(RoleTestBase):
+    def setUp(self):
+        super().setUp()
+        self.url = reverse("main:create_skill_ajax")
+        self.data = {
+            "name": "<b>Flutter</b>",
+            "category": "framework",
+            "proficiency": 3,
+            "description": '<img src="x" onerror="alert(1)">Mobile apps',
+        }
+
+    def test_only_owner_can_create_through_ajax(self):
+        for user in (None, self.regular, self.editor):
+            with self.subTest(user=user):
+                self.login_as(user)
+                response = self.client.post(self.url, self.data)
+                self.assertEqual(response.status_code, 403)
+                self.assertIn("message", response.json())
+        self.assertFalse(Skill.objects.filter(name="Flutter").exists())
+
+        self.login_as(self.owner)
+        response = self.client.post(self.url, self.data)
+        self.assertEqual(response.status_code, 201)
+        skill = Skill.objects.get(pk=response.json()["pk"])
+        self.assertEqual(skill.name, "Flutter")
+        self.assertEqual(skill.description, "Mobile apps")
+
+    def test_invalid_input_returns_errors_without_saving(self):
+        self.login_as(self.owner)
+        before = Skill.objects.count()
+        for invalid in ({"name": '<img src="x" onerror="alert(1)">'},
+                        {"proficiency": 9}, {"category": "unknown"},
+                        {"icon_url": "javascript:alert(1)"}):
+            with self.subTest(invalid=invalid):
+                response = self.client.post(self.url, {**self.data, **invalid})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(invalid)), response.json()["errors"])
+        self.assertEqual(Skill.objects.count(), before)
+
+    def test_ajax_requires_post_and_csrf(self):
+        self.login_as(self.owner)
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.owner)
+        self.assertEqual(csrf_client.post(self.url, self.data).status_code, 403)
+        csrf_client.get(reverse("main:create_skill"))
+        token = csrf_client.cookies["csrftoken"].value
+        response = csrf_client.post(self.url, self.data, HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(response.status_code, 201)
+
+    def test_json_star_state_filters_and_privacy(self):
+        self.skill.starred_by.add(self.regular)
+        Skill.objects.create(name="Figma", category="design")
+        url = reverse("main:get_skills_json")
+        for user, expected in ((None, False), (self.regular, True), (self.editor, False)):
+            with self.subTest(user=user):
+                self.login_as(user)
+                response = self.client.get(url, {"name": "dJaNgO", "category": "programming"})
+                data = response.json()
+                self.assertEqual(len(data), 1)
+                fields = data[0]["fields"]
+                self.assertEqual(fields["star_count"], 1)
+                self.assertEqual(fields["is_starred"], expected)
+                self.assertNotContains(response, self.regular.username)
+                self.assertNotIn("starred_by", fields)
+        self.assertEqual(self.client.get(url, {"name": "missing"}).json(), [])
