@@ -383,7 +383,7 @@ class ButtonVisibilityTest(RoleTestBase):
         cases = [
             (None, False, False, False),
             (self.regular, False, False, False),
-            (self.editor, False, True, False),
+            (self.editor, False, False, False),
             (self.owner, True, True, True),
         ]
         for user, can_add, can_edit, can_delete in cases:
