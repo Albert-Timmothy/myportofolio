@@ -32,7 +32,7 @@ class ProjectAPITest(APITestCase):
         self.assertFalse(project["is_starred"])
         self.assertNotIn("fields", project)
         self.assertNotIn("starred_by", project)
-        self.assertNotIn("starred_by_names", project)
+        self.assertEqual(project["starred_by_names"], "")
         self.assertEqual(self.client.get(self.detail_url).status_code, 200)
 
     def test_search_and_empty_results(self):
@@ -96,6 +96,7 @@ class ProjectAPITest(APITestCase):
         response = self.client.post(self.star_url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data["is_starred"])
+        self.assertEqual(response.data["starred_by_names"], self.visitor.username)
         self.assertEqual(response.data["star_count"], 1)
         self.assertTrue(self.project.starred_by.filter(pk=self.visitor.pk).exists())
         response = self.client.post(self.star_url)
@@ -107,10 +108,11 @@ class ProjectAPITest(APITestCase):
         self.client.force_authenticate(user=self.owner)
         response = self.client.post(self.list_url, {
             **self.payload, "id": str(uuid.uuid4()), "star_count": 99,
-            "is_starred": True, "starred_by": [self.visitor.id],
+            "is_starred": True, "starred_by": [self.visitor.id], "starred_by_names": "forged",
         }, format="json")
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["star_count"], 0)
+        self.assertEqual(response.data["starred_by_names"], "")
         self.assertFalse(response.data["is_starred"])
         self.assertFalse(Project.objects.get(pk=response.data["id"]).starred_by.exists())
 
