@@ -6,7 +6,7 @@
         <button type="button" class="project-form-modal__close" popovertarget="add-skill-modal"
                 popovertargetaction="hide" aria-label="Tutup form tambah skill">&times;</button>
         <h2 id="add-skill-title">Tambah Skill &amp; Tool</h2>
-        <form id="skill-form" method="post" action="{% url 'main:create_skill_ajax' %}" class="project-form">
+        <form id="skill-form" method="post" action="{% url 'api:skill-list' %}" class="project-form">
             {% csrf_token %}
             {% for field in form %}
                 <div class="form-group">

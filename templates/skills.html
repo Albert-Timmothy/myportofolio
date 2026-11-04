@@ -4,20 +4,20 @@
 {% block content %}
 <main>
     <section class="experience-section" id="skills"
-             data-list-url="{% url 'main:get_skills_json' %}"
+             data-list-url="{% url 'api:skill-list' %}"
              data-login-url="{% url 'main:login' %}"
              data-edit-url="{% url 'main:update_skill' '00000000-0000-0000-0000-000000000000' %}"
-             data-delete-url="{% url 'main:delete_skill' '00000000-0000-0000-0000-000000000000' %}"
-             data-star-url="{% url 'main:toggle_skill_star' '00000000-0000-0000-0000-000000000000' %}"
+             data-delete-url="{% url 'api:skill-detail' '00000000-0000-0000-0000-000000000000' %}"
+             data-star-url="{% url 'api:skill-star' '00000000-0000-0000-0000-000000000000' %}"
              data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
              data-can-edit="{{ perms.main.change_skill|yesno:'true,false' }}"
-             data-can-delete="{{ perms.main.delete_skill|yesno:'true,false' }}">
+             data-can-delete="{{ user.is_superuser|yesno:'true,false' }}">
         {% csrf_token %}
         <div class="container">
             <p class="section-kicker">Kemampuan yang saya gunakan</p>
             <div class="project-header">
                 <h1>Skills &amp; Tools</h1>
-                {% if perms.main.add_skill %}
+                {% if user.is_superuser %}
                     <button type="button" class="button project-add-button" popovertarget="add-skill-modal">
                         <span aria-hidden="true">+</span> Tambah Skill
                     </button>
@@ -34,7 +34,7 @@
                     {% endfor %}
                 </select>
                 <button type="submit" class="button">Cari</button>
-                <a href="{% url 'main:get_skills_json' %}" class="button button-secondary">Lihat JSON</a>
+                <a href="{% url 'api:skill-list' %}" class="button button-secondary">Lihat JSON</a>
             </form>
             <div id="skills-loading" class="empty-state" role="status">Memuat skills...</div>
             <div id="skills-error" class="empty-state hide" role="alert">
@@ -47,8 +47,8 @@
         </div>
     </section>
 </main>
-{% if perms.main.add_skill %}{% include "components/skill_form_modal.html" %}{% endif %}
-{% if perms.main.delete_skill %}
+{% if user.is_superuser %}{% include "components/skill_form_modal.html" %}{% endif %}
+{% if user.is_superuser %}
     <div id="delete-skill-modal" class="project-delete-modal" popover="auto" role="dialog"
          aria-modal="true" aria-labelledby="delete-skill-title">
         <button type="button" class="project-delete-modal__backdrop" popovertarget="delete-skill-modal"

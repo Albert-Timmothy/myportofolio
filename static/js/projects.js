@@ -59,6 +59,7 @@
             `button button-star${project.is_starred ? ' is-starred' : ''}`,
             `★ ${project.is_starred ? 'Unstar' : 'Star'} `);
         star.append(element('span', 'star-count', project.star_count));
+        star.title = project.starred_by_names || 'Jadilah yang pertama memberi star';
         if (IS_AUTHENTICATED) {
             star.type = 'button';
             star.dataset.action = 'star';

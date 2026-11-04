@@ -28,7 +28,7 @@
     }
 
     function buildCard(item) {
-        const skill = item.fields;
+        const skill = item;
         const card = element('article', 'experience-card');
         if (skill.icon_url) {
             // Batasi protokol URL, termasuk untuk data lama yang tersimpan.
@@ -57,16 +57,20 @@
             `button button-star${skill.is_starred ? ' is-starred' : ''}`, `★ ${starLabel} `);
         star.append(element('span', 'star-count', skill.star_count));
         if (config.authenticated === 'true') {
-            const form = element('form', 'star-form');
-            form.method = 'post';
-            form.action = itemUrl(config.starUrl, item.pk);
-            const token = element('input', '');
-            token.type = 'hidden';
-            token.name = 'csrfmiddlewaretoken';
-            token.value = csrfToken;
-            star.type = 'submit';
-            form.append(token, star);
-            actions.append(form);
+            star.type = 'button';
+            star.title = skill.starred_by_names || 'Jadilah yang pertama memberi star';
+            star.addEventListener('click', async () => {
+                if (star.disabled) return;
+                star.disabled = true;
+                try {
+                    await writeSkill(itemUrl(config.starUrl, skill.id), 'POST');
+                    showToast('Berhasil', 'Star diperbarui.', 'success');
+                    await fetchSkills();
+                } catch (err) {
+                    showToast('Gagal', err.message, 'error');
+                } finally { star.disabled = false; }
+            });
+            actions.append(star);
         } else {
             star.href = config.loginUrl;
             star.title = 'Login untuk memberi star';
@@ -74,7 +78,7 @@
         }
         if (config.canEdit === 'true') {
             const edit = element('a', 'button button-secondary', 'Edit');
-            edit.href = itemUrl(config.editUrl, item.pk);
+            edit.href = itemUrl(config.editUrl, item.id);
             actions.append(edit);
         }
         if (config.canDelete === 'true') {
@@ -82,7 +86,7 @@
             remove.type = 'button';
             remove.addEventListener('click', () => {
                 document.getElementById('delete-skill-name').textContent = skill.name;
-                document.getElementById('delete-skill-form').action = itemUrl(config.deleteUrl, item.pk);
+                document.getElementById('delete-skill-form').action = itemUrl(config.deleteUrl, item.id);
                 document.getElementById('delete-skill-modal').showPopover();
             });
             actions.append(remove);
@@ -129,6 +133,7 @@
     }
     searchInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
+        controller?.abort();
         debounceTimer = setTimeout(fetchSkills, 300);
     });
     categoryInput.addEventListener('change', searchNow);
@@ -138,7 +143,42 @@
     });
     document.getElementById('skills-retry').addEventListener('click', searchNow);
 
-    // Modal hanya ada bagi pengguna dengan permission add_skill.
+    function errorMessage(data) {
+        if (Array.isArray(data)) return data.map(errorMessage).join(' ');
+        if (data && typeof data === 'object') {
+            return Object.entries(data).map(([key, value]) => `${key}: ${errorMessage(value)}`).join(' ');
+        }
+        return String(data ?? '');
+    }
+
+    async function writeSkill(url, method, payload) {
+        const response = await fetch(url, {
+            method, credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
+        if (response.status === 204) return null;
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(errorMessage(data) || `HTTP ${response.status}`);
+        return data;
+    }
+
+    const deleteForm = document.getElementById('delete-skill-form');
+    deleteForm?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = deleteForm.querySelector('[type="submit"]');
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+            await writeSkill(deleteForm.action, 'DELETE');
+            document.getElementById('delete-skill-modal').hidePopover();
+            showToast('Berhasil', 'Skill dihapus.', 'success');
+            await fetchSkills();
+        } catch (err) { showToast('Gagal menghapus skill', err.message, 'error'); }
+        finally { button.disabled = false; }
+    });
+
+    // Modal tambah hanya tersedia bagi pemilik portofolio.
     const form = document.getElementById('skill-form');
     if (form) {
         form.addEventListener('submit', async event => {
@@ -148,27 +188,17 @@
             submit.disabled = true;
             submit.textContent = 'Menyimpan...';
             try {
-                const response = await fetch(form.action, {
-                    method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' },
-                });
-                // Respons non-JSON (mis. halaman 403 CSRF dari Django) tidak boleh dianggap gagal koneksi.
-                const result = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                    const messages = result.errors
-                        ? Object.values(result.errors).flat().map(err => err.message)
-                        : [result.message || `Skill gagal ditambahkan (status ${response.status}). Silakan coba lagi.`];
-                    showToast('Gagal menambahkan skill', messages.join(' '), 'error');
-                    return;
-                }
+                const payload = Object.fromEntries(new FormData(form));
+                delete payload.csrfmiddlewaretoken;
+                payload.is_featured = form.elements.is_featured.checked;
+                payload.proficiency = Number(payload.proficiency);
+                await writeSkill(config.listUrl, 'POST', payload);
                 form.reset();
                 document.getElementById('add-skill-modal').hidePopover();
-                showToast('Berhasil', result.message, 'success');
-                // Bersihkan filter agar skill baru langsung terlihat.
-                searchInput.value = '';
-                categoryInput.value = '';
+                showToast('Berhasil', 'Skill ditambahkan.', 'success');
                 searchNow();
-            } catch {
-                showToast('Gagal menambahkan skill', 'Tidak dapat menghubungi server. Silakan coba lagi.', 'error');
+            } catch (err) {
+                showToast('Gagal menambahkan skill', err.message, 'error');
             } finally {
                 submit.disabled = false;
                 submit.textContent = 'Tambah Skill';
