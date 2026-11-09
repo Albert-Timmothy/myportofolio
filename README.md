@@ -20,11 +20,15 @@ Saya membuat Website portofolio pribadi dengan Django untuk mata kuliah Pemrogra
    ```bash
    pip install -r requirements.txt
    ```
-3. Jalankan server:
+3. Terapkan migrasi database:
+   ```bash
+   python manage.py migrate
+   ```
+4. Jalankan server:
    ```bash
    python manage.py runserver
    ```
-4. Buka website di local`http://127.0.0.1:8000/`.
+5. Buka website di local `http://127.0.0.1:8000/`.
 
 ### Tugas 1
 
@@ -116,3 +120,17 @@ Saya menggunakan Claude (claude.ai) untuk memandu pengerjaan Tugas 4. Saya mengu
 ## AI Disclosure
  
 Saya menggunakan Claude (claude.ai) untuk memandu pengerjaan Tugas 5. Saya mengunggah soal dan ZIP proyek, lalu meminta dibimbing bertahap dari Tutorial 05 (AJAX, debounce, modal, toast, XSS) sampai menerapkannya pada section Skills & Tools, tidak langsung diberi jawaban. Saya sendiri yang menjalankan server, menguji keempat peran di browser, mencoba payload XSS, dan melakukan commit secara bertahap. Claude juga dipakai untuk memeriksa kode terhadap checklist dan rubrik sebelum dikumpulkan, serta membantu menyusun draf README ini, yang kemudian saya baca dan sesuaikan dengan pemahaman saya. Keterbatasan AI yang saya temui: pengecekan kode oleh AI hanya terbatas pada berkas yang saya unggah, sehingga hasil akhir tetap harus saya verifikasi sendiri lewat pengujian di browser.
+
+### Tugas 6
+
+1. Menurut saya, REST (*Representational State Transfer*) adalah gaya arsitektur untuk mengatur komunikasi client dan server berdasarkan resource, misalnya skill pada `/api/v1/skills/<uuid>/`. Jadi mengembalikan JSON saja belum cukup untuk menyebut API RESTful, karena JSON hanya format datanya. API juga perlu punya antarmuka yang konsisten, memakai method dan status HTTP sesuai maknanya, serta memperhatikan prinsip seperti pemisahan client-server, stateless, caching, dan sistem berlapis. Stateless berarti setiap request membawa informasi yang diperlukan untuk dipahami tanpa bergantung pada urutan request sebelumnya. Di tugas ini saya menerapkan pola resource dan method HTTP, tetapi autentikasinya masih menggunakan sesi Django, sehingga saya tidak mengklaim semua prinsip REST sudah dipenuhi secara ketat. Perbedaan PUT dan PATCH ada pada cakupan pembaruannya: PUT digunakan untuk mengirim representasi pengganti resource, sedangkan PATCH hanya mengubah sebagian field. Contohnya, PUT cocok saat mengirim ulang seluruh data skill dari formulir lengkap, sementara PATCH cocok saat hanya mengganti `proficiency` dari 3 menjadi 4. Halaman edit saya memakai PATCH. Pada DRF, PATCH diproses dengan `partial=True`, jadi field wajib yang tidak dikirim tidak langsung dianggap error. PUT tetap memvalidasi field wajib, tetapi perilaku field opsional yang tidak dikirim juga bergantung pada serializer, bukan otomatis selalu dikosongkan.
+
+2. Serializer pada DRF membantu mengubah objek model menjadi data yang bisa dirender sebagai JSON, sekaligus memvalidasi data yang masuk sebelum disimpan ke database. Di bagian Skills & Tools, saya memakai `SkillSerializer` dengan daftar field yang ditulis satu-satu agar jelas data apa saja yang boleh keluar. Nama dan deskripsi dibersihkan dengan `strip_tags`, lalu nama yang kosong setelah dibersihkan ditolak. Field `star_count`, `is_starred`, dan `starred_by_names` dihitung dari relasi star dan bersifat read-only, jadi pengguna tidak bisa memalsukan jumlah atau identitas pemberi star lewat payload. Dibanding merakit dictionary manual dengan `JsonResponse`, serializer membuat aturan representasi dan validasi terkumpul di satu tempat. Saya juga bisa memakai serializer yang sama untuk daftar, detail, tambah, dan edit, dengan pesan kesalahan per field yang lebih konsisten. `JsonResponse` sendiri hanya mengirim respons JSON, sehingga validasi dan penyimpanan tetap harus saya tulis terpisah.
+
+3. Autentikasi menjawab siapa pengguna yang sedang mengirim request, sedangkan otorisasi menjawab tindakan apa yang boleh dilakukan pengguna itu. Pada API ini, `SessionAuthentication` mengenali pengguna dari sesi login Django. Setelah itu, `IsPortfolioOwnerOrEditorOrReadOnly` memeriksa hak akses: semua orang boleh membaca, pengguna biasa boleh star melalui endpoint tersendiri, Editor dengan permission `main.change_skill` boleh PUT/PATCH, dan superuser boleh membuat serta menghapus data. Endpoint star memakai `IsAuthenticated` dan mengambil akun dari `request.user`, bukan dari ID pengguna yang dikirim client. Menyembunyikan tombol hanya membantu tampilan, karena request tetap bisa dikirim langsung lewat alat HTTP atau JavaScript. Karena itu, pengecekan harus dilakukan di server. View tambah dan hapus lama juga saya sesuaikan agar pengguna non-superuser yang kebetulan memiliki permission tambahan tidak bisa melewati aturan API lewat URL lama.
+
+4. Token CSRF tetap diperlukan karena browser otomatis menyertakan cookie sesi pada request yang memenuhi aturan cookie. Situs lain bisa mencoba memanfaatkan sesi login tersebut untuk mengirim tindakan atas nama pengguna. Mengirim JSON tidak dengan sendirinya menggantikan perlindungan CSRF. Dengan `SessionAuthentication`, request yang mengubah data dari pengguna yang sudah login harus lolos pemeriksaan token CSRF. Template saya menyediakan `{% csrf_token %}`, kemudian JavaScript mengirim nilainya melalui header `X-CSRFToken` saat POST, PATCH, dan DELETE. Tes dengan `force_authenticate` memaksa identitas pengguna untuk menguji permission, sehingga tidak membuktikan bahwa alur autentikasi sesi dan pemeriksaan CSRF benar-benar berjalan. Karena itu, tes tambahan memakai `APIClient(enforce_csrf_checks=True)` dan `.login()`: request tanpa token harus mendapat 403 dan database tidak berubah, sedangkan request dengan token yang sesuai boleh berhasil. Pemeriksaan ini juga mencakup edit oleh Editor/pemilik serta star oleh pengguna biasa, Editor, dan pemilik.
+
+
+## AI Disclosure
+Saya menggunakan Claude (claude.ai) untuk memandu pengerjaan Tugas 6. Saya mengunggah soal dan ZIP proyek, lalu meminta dibimbing bertahap dari Tutorial. Saya sendiri yang menjalankan server, menguji keempat peran di browser dan melakukan commit secara bertahap. Claude juga dipakai untuk memeriksa kode terhadap checklist dan rubrik sebelum dikumpulkan. Keterbatasan AI yang saya temui: pengecekan kode oleh AI hanya terbatas pada berkas yang saya unggah, sehingga hasil akhir tetap harus saya verifikasi sendiri lewat pengujian di 
