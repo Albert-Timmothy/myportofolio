@@ -53,8 +53,10 @@ class SkillAPITest(APITestCase):
         self.assertEqual(self.skill.proficiency, 5)
         self.assertEqual(self.skill.name, "Django")
         self.assertEqual(self.client.put(self.detail_url, self.payload, format="json").status_code, 200)
+        before = list(Skill.objects.order_by("pk").values())
         self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, 403)
         self.assertEqual(self.client.delete(self.detail_url).status_code, 403)
+        self.assertEqual(list(Skill.objects.order_by("pk").values()), before)
         self.assertEqual(self.client.options(self.detail_url).status_code, 200)
         self.assertTrue(Skill.objects.filter(pk=self.skill.pk).exists())
 
@@ -94,6 +96,7 @@ class SkillAPITest(APITestCase):
 
     def test_star_identity_toggle_and_methods(self):
         self.assertEqual(self.client.post(self.star_url).status_code, 403)
+        self.assertFalse(self.skill.starred_by.exists())
         self.client.force_authenticate(user=self.visitor)
         response = self.client.post(self.star_url)
         self.assertEqual(response.status_code, 200)
@@ -107,6 +110,57 @@ class SkillAPITest(APITestCase):
         self.assertEqual(self.client.get(self.star_url).status_code, 405)
         self.client.force_authenticate(user=self.owner)
         self.assertEqual(self.client.delete(self.list_url).status_code, 405)
+
+    def test_legacy_create_delete_do_not_bypass_owner_requirement(self):
+        self.editor.user_permissions.add(*Permission.objects.filter(
+            content_type__app_label="main", codename__in=["add_skill", "delete_skill"],
+        ))
+        self.client.force_login(self.editor)
+        before = list(Skill.objects.order_by("pk").values())
+        for name, args in [
+            ("main:create_skill", []), ("main:create_skill_ajax", []),
+            ("main:delete_skill", [self.skill.pk]),
+        ]:
+            with self.subTest(view=name):
+                response = self.client.post(reverse(name, args=args), self.payload)
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(list(Skill.objects.order_by("pk").values()), before)
+
+    def test_edit_page_and_session_patch_for_editor_and_owner(self):
+        for user in (self.editor, self.owner):
+            with self.subTest(user=user.username):
+                client = APIClient(enforce_csrf_checks=True)
+                self.assertTrue(client.login(username=user.username, password="test-password"))
+                page = client.get(reverse("main:update_skill", args=[self.skill.pk]))
+                self.assertContains(page, f'data-api-url="{self.detail_url}"')
+                self.assertContains(page, 'js/skill_edit.js')
+                before = Skill.objects.get(pk=self.skill.pk).name
+                response = client.patch(self.detail_url, {"name": "Ditolak"}, format="json")
+                self.assertEqual(response.status_code, 403)
+                self.skill.refresh_from_db()
+                self.assertEqual(self.skill.name, before)
+                token = client.cookies["csrftoken"].value
+                response = client.patch(self.detail_url, {"name": "<b>Python</b>"},
+                                        format="json", HTTP_X_CSRFTOKEN=token)
+                self.assertEqual(response.status_code, 200)
+                self.skill.refresh_from_db()
+                self.assertEqual(self.skill.name, "Python")
+
+    def test_star_uses_session_user_and_requires_csrf_for_each_role(self):
+        for user in (self.visitor, self.editor, self.owner):
+            with self.subTest(user=user.username):
+                client = APIClient(enforce_csrf_checks=True)
+                self.assertTrue(client.login(username=user.username, password="test-password"))
+                client.get(reverse("main:show_skills"))
+                before = self.skill.starred_by.count()
+                self.assertEqual(client.post(self.star_url).status_code, 403)
+                self.assertEqual(self.skill.starred_by.count(), before)
+                token = client.cookies["csrftoken"].value
+                response = client.post(self.star_url, {"user_id": self.owner.pk},
+                                       format="json", HTTP_X_CSRFTOKEN=token)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(self.skill.starred_by.filter(pk=user.pk).exists())
+                self.assertEqual(self.skill.starred_by.count(), before + 1)
 
     def test_session_csrf_and_frontend_routes(self):
         client = APIClient(enforce_csrf_checks=True)
