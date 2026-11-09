@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block meta %}
     <title>{{ form_title }} - {{ name }}</title>
 {% endblock meta %}
@@ -7,7 +8,7 @@
         <section class="experience-section">
             <div class="container">
                 <h1>{{ form_title }}</h1>
-                <form method="post" class="project-form">
+                <form method="post" class="project-form"{% if skill %} id="skill-edit-form" data-api-url="{% url 'api:skill-detail' skill.pk %}"{% endif %}>
                     {% csrf_token %}
                     {% for field in form %}
                         <div class="form-group{% if field.field.widget.input_type == 'checkbox' %} form-group--checkbox{% endif %}">
@@ -27,4 +28,5 @@
             </div>
         </section>
     </main>
+    {% if skill %}<script src="{% static 'js/skill_edit.js' %}" defer></script>{% endif %}
 {% endblock content %}

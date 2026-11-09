@@ -298,7 +298,7 @@ def show_skills(request):
 @require_POST
 def create_skill_ajax(request):
     # JSON 403, bukan redirect login yang akan diikuti oleh fetch().
-    if not request.user.has_perm("main.add_skill"):
+    if not request.user.is_superuser:
         return JsonResponse(
             {"message": "Hanya pemilik portofolio yang dapat menambahkan skill."},
             status=403,
@@ -316,7 +316,7 @@ def create_skill_ajax(request):
 
 @login_required(login_url="/login/")
 def create_skill(request):
-    if not request.user.has_perm("main.add_skill"):
+    if not request.user.is_superuser:
         raise PermissionDenied
 
     form = SkillForm(request.POST or None)
@@ -353,6 +353,7 @@ def update_skill(request, skill_id):
         "form": form,
         "form_title": "Edit Skill & Tool",
         "submit_label": "Simpan Perubahan",
+        "skill": skill,
     }
     return render(request, "skill_form.html", context)
 
@@ -360,7 +361,7 @@ def update_skill(request, skill_id):
 @login_required(login_url="/login/")
 @require_POST
 def delete_skill(request, skill_id):
-    if not request.user.has_perm("main.delete_skill"):
+    if not request.user.is_superuser:
         raise PermissionDenied
 
     skill = get_object_or_404(Skill, pk=skill_id)
